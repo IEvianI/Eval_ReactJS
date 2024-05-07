@@ -1,48 +1,42 @@
 import { useState } from 'react'
-
-import { validateRegisterForm } from '../../services/formAuthValidation'
 import { toast } from 'react-toastify'
-import { Button, Input } from '@nextui-org/react'
-
+import { Button, Input, Switch } from '@nextui-org/react'
+import { useAuth } from '../../contexts/authContext'
+import { useNavigate } from 'react-router-dom'
+import axios from 'axios'
 function RegisterForm () {
-  // Version simple
-  // const [firstName, setFirstName] = useState('')
-  // const [lastName, setLastName] = useState('')
-  const [errors, setErrors] = useState({
-    firstName: null,
-    lastName: null,
-    username: null,
-    email: null,
-    password: null
-  })
-
   const [formData, setFormData] = useState({
-    firstName: 'Marius',
-    lastName: 'Sergent',
-    username: 'test56',
-    email: 'tooto@toto.fr',
-    password: '123456'
+    firstName: '',
+    lastName: '',
+    username: '',
+    email: '',
+    password: '',
+    isPublic: false,
+    islienCompte: false
   })
-
+  const navigate = useNavigate()
+  const { state: { user, jwt, error, loading }, register } = useAuth()
   const handleChange = (event) => {
+    const { name, value, checked } = event.target
+    const newValue = name === 'isPublic' ? checked : value
     setFormData({
       ...formData,
-      [event.target.name]: event.target.value
+      [name]: newValue,
+      RoleType: newValue === true ? 'Artisans' : 'Public'
     })
   }
-
-  const handleSubmit = (event) => {
-    event.preventDefault()
-    const _errors = validateRegisterForm(formData)
-    if (_errors) {
-      setErrors(_errors)
-    } else {
+  const handleSubmit = async (event) => {
+    try {
+      event.preventDefault()
+      console.log(formData.RoleType)
+      register(formData)
       toast.info(`Formulaire soumis : ${formData.firstName} ${formData.lastName}`)
+      navigate('/dashboard')
+      // }
+    } catch (error) {
+      console.error('An error occurred:', error)
     }
   }
-
-  console.log(formData)
-
   return (
     <form className='form-container' onSubmit={handleSubmit}>
       <Input
@@ -51,7 +45,6 @@ function RegisterForm () {
         placeholder='Entrez votre nom...'
         value={formData.lastName}
         onChange={handleChange}
-        error={errors.lastName}
       />
       <Input
         name='firstName'
@@ -59,7 +52,6 @@ function RegisterForm () {
         placeholder='Entrez votre prénom...'
         value={formData.firstName}
         onChange={handleChange}
-        error={errors.firstName}
       />
       <Input
         name='username'
@@ -82,7 +74,16 @@ function RegisterForm () {
         value={formData.password}
         onChange={handleChange}
       />
+      <label htmlFor='isPublic' className='flex items-center mb-4'>
+        <span className='mr-2'>Public ou artisans :</span>
+        <Switch
+          name='isPublic'
+          checked={formData.isPublic}
+          onChange={handleChange}
+        />
+      </label>
       <Button
+        isLoading={loading}
         type='submit'
         color='primary'
       >
@@ -91,5 +92,4 @@ function RegisterForm () {
     </form>
   )
 }
-
 export default RegisterForm
